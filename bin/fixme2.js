@@ -1,67 +1,67 @@
 "use strict";
 
-var byline = require("byline"),
-  chalk = require("chalk"),
-  eventStream = require("event-stream"),
-  fs = require("fs"),
-  isBinaryFile = require("isbinaryfile"),
-  minimatch = require("minimatch"),
-  readdirp = require("readdirp");
+import byline from "byline";
+import chalk from "chalk";
+import eventStream from "event-stream";
+import fs from "fs";
+import isBinaryFile from "isbinaryfile";
+import minimatch from "minimatch";
+import readdirp from "readdirp";
+import defaultFilesToScan from "./fileTypes.js";
 
-// TODO: Expand filetypes scanned. Possibly create new file to hold array.
-var ignoredDirectories = ["node_modules/**", ".git/**", ".hg/**"],
-  filesToScan = ["**/*.js", "Makefile", "**/*.sh"],
-  scanPath = process.cwd(),
-  fileEncoding = "utf8",
-  lineLengthLimit = 1000,
-  skipChecks = [],
-  messageChecks = {
-    note: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?NOTE\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ✐ NOTE",
-      colorer: chalk.green,
-    },
-    optimize: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?OPTIMIZE\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ↻ OPTIMIZE",
-      colorer: chalk.blue,
-    },
-    todo: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?TODO\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ✓ TODO",
-      colorer: chalk.magenta,
-    },
-    hack: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?HACK\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ✄ HACK",
-      colorer: chalk.yellow,
-    },
-    xxx: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?XXX\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ✗ XXX",
-      colorer: chalk.black.bgYellow,
-    },
-    fixme: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?FIXME\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ☠ FIXME",
-      colorer: chalk.red,
-    },
-    bug: {
-      regex:
-        /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?BUG\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
-      label: " ☢ BUG",
-      colorer: chalk.white.bgRed,
-    },
-  };
+let filesToScan = defaultFilesToScan;
+let scanPath = process.cwd();
+let fileEncoding = "utf8";
+let lineLengthLimit = 1000;
+let skipChecks = [];
+let ignoredDirectories = ["node_modules/**", ".git/**", ".hg/**"];
+let messageChecks = {
+  note: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!|\{\#|\*)(\-\-)?\s*@?NOTE\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ✐ NOTE",
+    colorer: chalk.green,
+  },
+  optimize: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?OPTIMIZE\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ↻ OPTIMIZE",
+    colorer: chalk.blue,
+  },
+  todo: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?TODO\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ✓ TODO",
+    colorer: chalk.magenta,
+  },
+  hack: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?HACK\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ✄ HACK",
+    colorer: chalk.yellow,
+  },
+  xxx: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?XXX\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ✗ XXX",
+    colorer: chalk.black.bgYellow,
+  },
+  fixme: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?FIXME\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ☠ FIXME",
+    colorer: chalk.red,
+  },
+  bug: {
+    regex:
+      /(?:^|[^:])(\/\/|\{\{\!|\!\{\#|\*)(\-\-)?\s*@?BUG\b\s*(?:\(([^:]*)\))*\s*:?\s*(.*)/i,
+    label: " ☢ BUG",
+    colorer: chalk.white.bgRed,
+  },
+};
 
 /**
- * Determines whether or not to let the file through. by ensuring that the
+ * Determines whether or not to let the file through by ensuring that the
  * file name does not match one of the excluded directories, and ensuring it
  * matches one of the file filters.
  *
@@ -303,7 +303,7 @@ function logMessages(messagesInfo) {
 /**
  * Reads through the configured path scans the matching files for messages.
  */
-function scanAndProcessMessages() {
+function scanAndProcessMessages(logFunction) {
   var stream = readdirp(scanPath, {
     fileFilter: fileFilterer,
   });
@@ -321,7 +321,6 @@ function scanAndProcessMessages() {
       var input = fs.createReadStream(fileInformation.fullPath, {
           encoding: fileEncoding,
         }),
-        // lineStream            = byline.createStream(input, { encoding: fileEncoding }),
         fileMessages = { path: null, total_lines: 0, messages: [] },
         currentFileLineNumber = 1;
 
@@ -362,7 +361,11 @@ function scanAndProcessMessages() {
       input.on("end", function () {
         fileMessages.total_lines = currentFileLineNumber;
 
-        logMessages(fileMessages);
+        if (logFunction) {
+          logFunction(fileMessages);
+        } else {
+          logMessages(fileMessages);
+        }
       });
 
       callback();
@@ -381,8 +384,8 @@ function scanAndProcessMessages() {
  * @property  {String}  options.file_encoding       The encoding the files scanned will be opened with, defaults to 'utf8'.
  * @property  {Number}  options.line_length_limit   The number of characters a line can be before it is ignored. Defaults to 1000.
  * @property  {Array}   options.skip                An array of names of checks to skip.
+ * @property  {Function} options.logFunction        Optional function to log messages
  */
-// TODO(johnp): Allow custom messageChecks to be added via options.
 function parseUserOptionsAndScan(options) {
   if (options) {
     if (options.path) {
@@ -418,7 +421,14 @@ function parseUserOptionsAndScan(options) {
     }
   }
 
-  scanAndProcessMessages();
+  scanAndProcessMessages(options.logFunction);
 }
 
-module.exports = parseUserOptionsAndScan;
+export {
+  parseUserOptionsAndScan,
+  retrieveMessagesFromLine,
+  filesToScan,
+  ignoredDirectories,
+  messageChecks,
+  logMessages,
+};

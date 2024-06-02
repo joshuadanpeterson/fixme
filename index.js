@@ -1,3 +1,15 @@
-'use strict';
+import {
+  parseUserOptionsAndScan,
+  retrieveMessagesFromLine,
+  filesToScan,
+  ignoredDirectories,
+  messageChecks,
+} from "./bin/fixme2.js";
 
-module.exports = require('./bin/fixme');
+export {
+  parseUserOptionsAndScan,
+  retrieveMessagesFromLine,
+  filesToScan,
+  ignoredDirectories,
+  messageChecks,
+};

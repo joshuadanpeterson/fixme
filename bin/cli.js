@@ -1,11 +1,11 @@
-'use strict';
+"use strict";
 
-var minimist = require('minimist'),
-    fixme    = require('..'),
-    pkg      = require('../package');
+var minimist = require("minimist"),
+  fixme = require(".."),
+  pkg = require("../package");
 
 function help() {
-  return '\
+  return "\
 Usage:\n\
 \n\
   fixme [options] [file|glob ...]\n\
@@ -28,8 +28,8 @@ Examples:\n\
 \n\
   Some ignored directories and some including files:\n\
 \n\
-    fixme -i \'node_modules/**\' -i \'.git/**\' -i \'build/**\' \'src/**/*.js\' \'test/*\' \n\
-';
+    fixme2 -i 'node_modules/**' -i '.git/**' -i 'build/**' 'src/**/*.js' 'test/*' \n\
+";
 }
 
 var argv = minimist(process.argv.slice(2));
@@ -52,7 +52,7 @@ if (path) {
 }
 
 var ignored_directories = argv.ignored_directories || argv.i;
-if (typeof ignored_directories === 'string') {
+if (typeof ignored_directories === "string") {
   ignored_directories = [ignored_directories];
 }
 if (ignored_directories) {
@@ -75,7 +75,7 @@ if (line_length_limit) {
 }
 
 var skip = argv.skip || argv.s;
-if (typeof skip === 'string') {
+if (typeof skip === "string") {
   skip = [skip];
 }
 if (skip) {

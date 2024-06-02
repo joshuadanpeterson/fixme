@@ -1,3 +1,22 @@
+import { parseUserOptionsAndScan, logMessages } from "../bin/fixme2.js";
+import filesToScan from "../bin/fileTypes.js";
+
+console.log("Starting annotation tests...");
+
+function logMessagesWithDetails(messagesInfo) {
+  console.log(`Scanning file: ${messagesInfo.path}`);
+  logMessages(messagesInfo);
+}
+
+parseUserOptionsAndScan({
+  path: process.cwd(),
+  ignored_directories: ["node_modules/**", ".git/**"],
+  file_patterns: filesToScan,
+  file_encoding: "utf8",
+  line_length_limit: 1000,
+  logFunction: logMessagesWithDetails, // Custom log function
+});
+
 // NOTE: This is the sample output for a note!
 // OPTIMIZE (John Postlethwait): This is the sample output for an optimize with an author!
 // TODO: This is the sample output for a todo!
@@ -10,10 +29,4 @@
 // The next line is just a URL
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1399196
 
-require('../bin/fixme')({ // NOTE: It doesn't need to be placed at line start!
-  path:                 process.cwd(),
-  ignored_directories:  ['node_modules/**', '.git/**'],
-  file_patterns:        ['**/annotation_test.js'],
-  file_encoding:        'utf8',
-  line_length_limit:    1000
-});
+console.log("Annotation tests completed.");
