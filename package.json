@@ -41,6 +41,5 @@
     "minimatch": "3.0.4",
     "minimist": "1.2.5",
     "readdirp": "3.4.0"
-  },
-  "devDependencies": {}
+  }
 }
